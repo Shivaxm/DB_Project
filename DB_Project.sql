@@ -47,9 +47,10 @@ CREATE TABLE Orders (
     order_date DATE NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
     status ENUM('pending', 'confirmed', 'delivered', 'cancelled') NOT NULL,
-    FOREIGN KEY (restaurant_id) REFERENCES Restaurants(id),
-    FOREIGN KEY (customer_id) REFERENCES Customers(id)
+    FOREIGN KEY (restaurant_id) REFERENCES Restaurants(restaurant_id),  -- Corrected reference
+    FOREIGN KEY (customer_id) REFERENCES Customer(id)  -- Corrected table name and reference
 );
+
 
 CREATE TABLE Pickup (
     pickup_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -79,7 +80,8 @@ CREATE TABLE Reviews (
     comments TEXT,
     review_date DATE NOT NULL,
     FOREIGN KEY (driver_id) REFERENCES Drivers(driver_id),
-    FOREIGN KEY (customer_id) REFERENCES Customers(id)
+    FOREIGN KEY (customer_id) REFERENCES Customer(id)
 );
+
 
 
