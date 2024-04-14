@@ -200,38 +200,35 @@ def print_customer_details():
     else:
         print("Currently not logged in...")
 
-
-
 def customerSignUp(connection):
     global customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment
 
     # Gathering customer details
     customer_name = input("Enter your name: ")
     customer_email = input("Enter your email: ")
-    customer_phone_number = input("Enter your phone number: ")  # Changed to string input
+    customer_phone_number = input("Enter your phone number: ")  # Keep as string input
     customer_password = input("Create your password: ")
     customer_birthday = input("Enter your birthday (YYYY-MM-DD): ")
     customer_address = input("Enter your address: ")
     customer_payment = input("Enter your preferred payment type: ")
 
-    # SQL Query to insert the new customer
-    query = """
-    INSERT INTO Customer (name, email, phone_number, password, birthday, address, payment)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """
-    
+    # Preparing to call the stored procedure
     try:
-        # Prepare cursor and execute the insert statement
         cursor = connection.cursor()
-        cursor.execute(query, (customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment))
+        
+        # Call the stored procedure
+        cursor.callproc('AddCustomer', (customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment))
         connection.commit()  # Ensure changes are committed to the database
         print("Customer added successfully!")
+        
     except Error as e:
         print("Error adding customer to database:", e)
-        connection.rollback()  # Roll back the transaction if error occurs
+        connection.rollback()  # Roll back the transaction if an error occurs
+    
     finally:
         if cursor:
             cursor.close()
+
 
 
 
