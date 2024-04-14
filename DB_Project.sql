@@ -288,4 +288,17 @@ INSERT INTO Reviews (driver_id, customer_id, rating, comments, review_date) VALU
 (1, 21, 5, 'Fantastic service, highly recommend.', '2023-04-21'),
 (2, 22, 3, 'Decent, but food was not hot.', '2023-04-22');
 
+CREATE INDEX idx_customer_email ON Customer(email);
+
+CREATE INDEX idx_restaurant_name ON Restaurants(name);
+CREATE INDEX idx_menu_restaurant_id ON Menu(restaurant_id);
+
+CREATE INDEX idx_orders_restaurant_id ON Orders(restaurant_id);
+CREATE INDEX idx_orders_customer_id ON Orders(customer_id);
+CREATE INDEX idx_orders_order_number ON Orders(order_number);
+
+CREATE INDEX idx_delivery_order_id ON Delivery(order_id);
+CREATE INDEX idx_delivery_driver_id ON Delivery(driver_id);
+CREATE INDEX idx_delivery_restaurant_id ON Delivery(restaurant_id);
+
 
