@@ -44,7 +44,6 @@ CREATE TABLE Orders (
     customer_id INT NOT NULL,
     order_number VARCHAR(255) UNIQUE NOT NULL,
     order_date DATE NOT NULL,
-    total_price DECIMAL(10,2) NOT NULL,
     status ENUM('pending', 'confirmed', 'delivered', 'cancelled') NOT NULL,
     FOREIGN KEY (restaurant_id) REFERENCES Restaurants(restaurant_id),  -- Corrected reference
     FOREIGN KEY (customer_id) REFERENCES Customer(id)  -- Corrected table name and reference
@@ -170,29 +169,29 @@ INSERT INTO Restaurants (name, address) VALUES
 
 
 
-INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, total_price, status) VALUES
-(1, 1, 'ORDER001', '2023-04-01', 19.99, 'delivered'),
-(2, 2, 'ORDER002', '2023-04-02', 29.99, 'pending'),
-(3, 3, 'ORDER003', '2023-04-03', 34.99, 'delivered'),
-(5, 4, 'ORDER004', '2023-04-04', 15.99, 'confirmed'),
-(1, 5, 'ORDER005', '2023-04-05', 22.99, 'cancelled'),
-(2, 6, 'ORDER006', '2023-04-06', 28.99, 'pending'),
-(1, 7, 'ORDER007', '2023-04-07', 45.50, 'delivered'),
-(3, 8, 'ORDER008', '2023-04-08', 12.50, 'confirmed'),
-(1, 9, 'ORDER009', '2023-04-09', 23.75, 'delivered'),
-(2, 10, 'ORDER010', '2023-04-10', 19.20, 'pending'),
-(5, 11, 'ORDER011', '2023-04-11', 33.90, 'delivered'),
-(2, 12, 'ORDER012', '2023-04-12', 17.99, 'confirmed'),
-(3, 13, 'ORDER013', '2023-04-13', 36.89, 'cancelled'),
-(4, 14, 'ORDER014', '2023-04-14', 24.99, 'pending'),
-(1, 15, 'ORDER015', '2023-04-15', 21.99, 'delivered'),
-(4, 16, 'ORDER016', '2023-04-16', 25.49, 'confirmed'),
-(1, 17, 'ORDER017', '2023-04-17', 30.00, 'delivered'),
-(2, 18, 'ORDER018', '2023-04-18', 28.15, 'pending'),
-(5, 19, 'ORDER019', '2023-04-19', 15.75, 'delivered'),
-(2, 20, 'ORDER020', '2023-04-20', 18.45, 'confirmed'),
-(6, 21, 'ORDER021', '2023-04-21', 26.55, 'cancelled'),
-(2, 22, 'ORDER022', '2023-04-22', 22.35, 'pending');
+INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, status) VALUES
+(1, 1, 'ORDER001', '2023-04-01', 'delivered'),
+(2, 2, 'ORDER002', '2023-04-02', 'pending'),
+(3, 3, 'ORDER003', '2023-04-03', 'delivered'),
+(5, 4, 'ORDER004', '2023-04-04', 'confirmed'),
+(1, 5, 'ORDER005', '2023-04-05', 'cancelled'),
+(2, 6, 'ORDER006', '2023-04-06', 'pending'),
+(1, 7, 'ORDER007', '2023-04-07', 'delivered'),
+(3, 8, 'ORDER008', '2023-04-08', 'confirmed'),
+(1, 9, 'ORDER009', '2023-04-09', 'delivered'),
+(2, 10, 'ORDER010', '2023-04-10', 'pending'),
+(5, 11, 'ORDER011', '2023-04-11', 'delivered'),
+(2, 12, 'ORDER012', '2023-04-12',  'confirmed'),
+(3, 13, 'ORDER013', '2023-04-13', 'cancelled'),
+(4, 14, 'ORDER014', '2023-04-14',  'pending'),
+(1, 15, 'ORDER015', '2023-04-15', 'delivered'),
+(4, 16, 'ORDER016', '2023-04-16', 'confirmed'),
+(1, 17, 'ORDER017', '2023-04-17',  'delivered'),
+(2, 18, 'ORDER018', '2023-04-18',  'pending'),
+(5, 19, 'ORDER019', '2023-04-19',  'delivered'),
+(2, 20, 'ORDER020', '2023-04-20',  'confirmed'),
+(6, 21, 'ORDER021', '2023-04-21',  'cancelled'),
+(2, 22, 'ORDER022', '2023-04-22',  'pending');
 
 
 INSERT INTO Menu (restaurant_id, item_name, description, price) VALUES
