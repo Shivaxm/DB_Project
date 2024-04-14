@@ -24,7 +24,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host='localhost',  # Address of the MySQL server, 'localhost' indicates it's on the local machine.
             user='root',  # Username to log in to MySQL, 'root' is the default admin user.
-            password='',  # Password for the MySQL user, should be kept secret and secure.
+            password='HiMyNameIsBob1))',  # Password for the MySQL user, should be kept secret and secure.
             database='db_project'  # Name of the database to which to connect.
         )
         # If the connection is successful, print a confirmation message.
@@ -542,7 +542,7 @@ def main():
                 + "\nType '3' to see Account Details" +
                 "\nType '4' to Order.\nType '5' to see all emails and passwords\n"
                 +"Type '6' to Navigate to Print Tables Menu\n"
-                +"Type '7' to see total price for an order\nType'8' to quit.")
+                +"Type '7' to see total price for an order\nType'8' to edit profile.\nType '9' to quit\n")
             
             if user_input == '1':
                 customerSignUp(connection)
@@ -572,7 +572,7 @@ def main():
                                         + "\nType '6' for pickup"
                                         + "\nType '7' for restaurant"
                                         + "\nType '8' for reviews"
-                                        + "\nType '9' to return to Main Menu\n")
+                                        + "\nType '9' to return to main menu\n")
                     if table_input == '1':
                         print("\ncustomer Table List:")
                         list_all_customers(connection)
@@ -615,12 +615,12 @@ def main():
                 order_id = input("Enter order ID: ")
                 displayOrderTotal(connection, order_id)
                 viewOrderItems(connection, order_id)
-            elif user_input == '8':
-                connection.close()
-                break
 
             elif user_input == '8':
                 edit_customer_profile(connection)
+            elif user_input == '9':
+                connection.close()
+                break
 
             else: 
                 print("Invalid Input!")
