@@ -52,23 +52,25 @@ def list_menu_by_restaurant_name(connection, restaurant_name):
         print(item)
 
 
-def customerOrder(connection):
+def ensureLoggedIn(connection):
     global loggedIn, customer_id
-
     if not loggedIn:
-        customerLogin(connection)
-        return  # Return after login attempt to give the user feedback and possibly retry
+        return customerLogin(connection)
+    return True
+
+
+def customerOrder(connection):
+    if not ensureLoggedIn(connection):
+        return  # Return after failed login attempt
 
     print("From the following Restaurants:")
     listAllRestaurants(connection)
 
-    restaurant_name = input("Enter a restaurant name: ")
-    
+    res_id = int(input("Enter Restaurant ID for the menu: "))
     print("Select from the following Menu:")
-    list_menu_by_restaurant_name(connection, restaurant_name)
+    menu_items = listMenuByRestaurantID(connection, res_id)
 
     try:
-        res_id = int(input("Enter Restaurant ID: "))
         order_number = input("Enter order number (e.g., 'ORD001'): ")
         order_date = input("Enter order date (YYYY-MM-DD): ")
         status = input("Enter status (pending, confirmed, delivered, cancelled): ")
@@ -84,37 +86,13 @@ def customerOrder(connection):
         order_id = cursor.lastrowid
 
         # Get and insert order items
-        more_items = True
-        while more_items:
-            menu_id = int(input("Enter Menu ID of the item to add: "))
-            quantity = int(input("Enter quantity of the item: "))
-
-            # Insert into Order_Items table
-            insert_item_query = """
-            INSERT INTO Order_Items (order_id, menu_id, quantity)
-            VALUES (%s, %s, %s)
-            """
-            cursor.execute(insert_item_query, (order_id, menu_id, quantity))
-
-            more = input("Add more items to the order? (yes/no): ").lower()
-            more_items = more == 'yes'
+        addItemsToOrder(connection, order_id, menu_items)
 
         # Additional input for delivery details
-        driver_id = int(input("Enter Driver ID (enter 0 if no driver): "))
-        if driver_id > 0:
-            delivery_address = input("Enter Delivery Address: ")
-            driver_tip = float(input("Enter Driver Tip: "))
-            delivery_time = input("Enter Delivery Time (HH:MM:SS): ")
-
-            # Insert the delivery details into the Delivery table
-            insert_delivery_query = """
-            INSERT INTO Delivery (order_id, driver_id, restaurant_id, delivery_address, driver_tip, delivery_time)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(insert_delivery_query, (order_id, driver_id, res_id, delivery_address, driver_tip, delivery_time))
+        handleDelivery(connection, order_id, res_id)
 
         connection.commit()
-        print("Order and delivery have been successfully recorded.")
+        print("Order and delivery have been successfully recorded. This is your order id: " + str(order_id))
     
     except Exception as e:
         print("An error occurred: ", e)
@@ -123,6 +101,57 @@ def customerOrder(connection):
     finally:
         if cursor:
             cursor.close()
+    
+
+   
+
+
+
+def listMenuByRestaurantID(connection, res_id):
+    cursor = connection.cursor()
+    query = "SELECT menu_id, item_name, price FROM Menu WHERE restaurant_id = %s"
+    cursor.execute(query, (res_id,))
+    items = cursor.fetchall()
+    if items:
+        for idx, item in enumerate(items, start=1):
+            print(f"{idx}. {item[1]} - ${item[2]}")
+    else:
+        print("No items available for this restaurant.")
+    cursor.close()
+    return items
+
+def addItemsToOrder(connection, order_id, menu_items):
+    more_items = True
+    while more_items:
+        item_choice = int(input("Choose the item number to add: ")) - 1
+        quantity = int(input("Enter quantity of the item: "))
+
+        # Get the menu_id from the chosen item
+        menu_id = menu_items[item_choice][0]
+
+        insert_item_query = """
+        INSERT INTO Order_Items (order_id, menu_id, quantity)
+        VALUES (%s, %s, %s)
+        """
+        cursor = connection.cursor()
+        cursor.execute(insert_item_query, (order_id, menu_id, quantity))
+
+        more = input("Add more items to the order? (yes/no): ").lower()
+        more_items = more == 'yes'
+
+def handleDelivery(connection, order_id, restaurant_id):
+    driver_id = int(input("Enter Driver ID (enter 0 if no driver): "))
+    if driver_id > 0:
+        delivery_address = input("Enter Delivery Address: ")
+        driver_tip = float(input("Enter Driver Tip: "))
+        delivery_time = input("Enter Delivery Time (HH:MM:SS): ")
+        insert_delivery_query = """
+        INSERT INTO Delivery (order_id, driver_id, restaurant_id, delivery_address, driver_tip, delivery_time)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor = connection.cursor()
+        cursor.execute(insert_delivery_query, (order_id, driver_id, restaurant_id, delivery_address, driver_tip, delivery_time))
+ 
 
 def displayOrderTotal(connection, order_id):
     try:
