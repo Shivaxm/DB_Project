@@ -24,7 +24,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host='localhost',  # Address of the MySQL server, 'localhost' indicates it's on the local machine.
             user='root',  # Username to log in to MySQL, 'root' is the default admin user.
-            password='C@bbiesToby1',  # Password for the MySQL user, should be kept secret and secure.
+            password='HiMyNameIsBob1))',  # Password for the MySQL user, should be kept secret and secure.
             database='db_project'  # Name of the database to which to connect.
         )
         # If the connection is successful, print a confirmation message.
@@ -54,59 +54,134 @@ def list_menu_by_restaurant_name(connection, restaurant_name):
         print(item)
 
 
-def customerOrder(connection):
+def ensureLoggedIn(connection):
     global loggedIn, customer_id
-
     if not loggedIn:
-        customerLogin(connection)
-        return  # Return after login attempt to give the user feedback and possibly retry
+        return customerLogin(connection)
+    return True
+
+
+def customerOrder(connection):
+    if not ensureLoggedIn(connection):
+        return  # Return after failed login attempt
 
     print("From the following Restaurants:")
     listAllRestaurants(connection)
 
-    restaurant_name = input("Enter a restaurant name: ")
-    
+    res_id = int(input("Enter Restaurant ID for the menu: "))
     print("Select from the following Menu:")
-    list_menu_by_restaurant_name(connection, restaurant_name)
+    menu_items = listMenuByRestaurantID(connection, res_id)
 
     try:
-        res_id = int(input("Enter Restaurant ID: "))
         order_number = input("Enter order number (e.g., 'ORD001'): ")
         order_date = input("Enter order date (YYYY-MM-DD): ")
-        total_price = float(input("Enter total price: "))
         status = input("Enter status (pending, confirmed, delivered, cancelled): ")
 
         cursor = connection.cursor()
 
         # Insert the order into the Orders table
         insert_order_query = """
-        INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, total_price, status)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, status)
+        VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_order_query, (res_id, customer_id, order_number, order_date, total_price, status))
+        cursor.execute(insert_order_query, (res_id, customer_id, order_number, order_date, status))
         order_id = cursor.lastrowid
 
+        # Get and insert order items
+        addItemsToOrder(connection, order_id, menu_items)
+
         # Additional input for delivery details
-        driver_id = int(input("Enter Driver ID: "))
+        handleDelivery(connection, order_id, res_id)
+
+        connection.commit()
+        print("Order and delivery have been successfully recorded. This is your order id: " + str(order_id))
+    
+    except Exception as e:
+        print("An error occurred: ", e)
+        connection.rollback()
+    
+    finally:
+        if cursor:
+            cursor.close()
+    
+
+   
+
+
+
+def listMenuByRestaurantID(connection, res_id):
+    cursor = connection.cursor()
+    query = "SELECT menu_id, item_name, price FROM Menu WHERE restaurant_id = %s"
+    cursor.execute(query, (res_id,))
+    items = cursor.fetchall()
+    if items:
+        for idx, item in enumerate(items, start=1):
+            print(f"{idx}. {item[1]} - ${item[2]}")
+    else:
+        print("No items available for this restaurant.")
+    cursor.close()
+    return items
+
+def addItemsToOrder(connection, order_id, menu_items):
+    more_items = True
+    while more_items:
+        item_choice = int(input("Choose the item number to add: ")) - 1
+        quantity = int(input("Enter quantity of the item: "))
+
+        # Get the menu_id from the chosen item
+        menu_id = menu_items[item_choice][0]
+
+        insert_item_query = """
+        INSERT INTO Order_Items (order_id, menu_id, quantity)
+        VALUES (%s, %s, %s)
+        """
+        cursor = connection.cursor()
+        cursor.execute(insert_item_query, (order_id, menu_id, quantity))
+
+        more = input("Add more items to the order? (yes/no): ").lower()
+        more_items = more == 'yes'
+
+def handleDelivery(connection, order_id, restaurant_id):
+    driver_id = int(input("Enter Driver ID (enter 0 if no driver): "))
+    if driver_id > 0:
         delivery_address = input("Enter Delivery Address: ")
         driver_tip = float(input("Enter Driver Tip: "))
         delivery_time = input("Enter Delivery Time (HH:MM:SS): ")
-
-        # Insert the delivery details into the Delivery table
         insert_delivery_query = """
         INSERT INTO Delivery (order_id, driver_id, restaurant_id, delivery_address, driver_tip, delivery_time)
         VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_delivery_query, (order_id, driver_id, res_id, delivery_address, driver_tip, delivery_time))
+        cursor = connection.cursor()
+        cursor.execute(insert_delivery_query, (order_id, driver_id, restaurant_id, delivery_address, driver_tip, delivery_time))
+ 
 
-       
-        connection.commit()
-        print("Order and delivery have been successfully recorded.")
-    
+def displayOrderTotal(connection, order_id):
+    try:
+        # Prepare a cursor to execute the query
+        cursor = connection.cursor()
+
+        # SQL query to calculate total price of the order
+        query = """
+        SELECT SUM(m.price * oi.quantity) AS total_price
+        FROM Order_Items oi
+        JOIN Menu m ON oi.menu_id = m.menu_id
+        WHERE oi.order_id = %s;
+        """
+
+        # Execute the query with the provided order_id
+        cursor.execute(query, (order_id,))
+        
+        # Fetch the result
+        total_price = cursor.fetchone()[0]  # Fetchone returns a tuple, and we need the first element
+
+        # Check if we got a result back
+        if total_price is not None:
+            print(f"Total price for Order ID {order_id} is: ${total_price:.2f}")
+        else:
+            print(f"No items found for Order ID {order_id}, cannot calculate total price.")
+
     except Exception as e:
-        print("An error occurred: ", e)
-       
-        connection.rollback()
+        print(f"An error occurred while calculating the total price: {e}")
     
     finally:
         if cursor:
@@ -416,6 +491,40 @@ def list_available_drivers(connection):
     for driver in drivers:
         print(driver)
 
+def viewOrderItems(connection, order_id):
+    try:
+        # Prepare a cursor to execute the query
+        cursor = connection.cursor()
+
+        # SQL query to fetch order details
+        query = """
+        SELECT m.item_name, m.price, oi.quantity
+        FROM Order_Items oi
+        JOIN Menu m ON oi.menu_id = m.menu_id
+        WHERE oi.order_id = %s;
+        """
+
+        # Execute the query with the provided order_id
+        cursor.execute(query, (order_id,))
+        
+        # Fetch all the results
+        items = cursor.fetchall()
+
+        # Check if any items were found
+        if items:
+            print(f"Items for Order ID {order_id}:")
+            for item in items:
+                item_name, price, quantity = item
+                print(f"{quantity}x {item_name} at ${price} each")
+        else:
+            print(f"No items found for Order ID {order_id}.")
+
+    except Exception as e:
+        print(f"An error occurred while fetching order items: {e}")
+    
+    finally:
+        if cursor:
+            cursor.close()
 
 
 
@@ -432,7 +541,8 @@ def main():
             user_input = input("\nMain Menu\n\nType '1' Sign Up\nType '2' to Log in"
                 + "\nType '3' to see Account Details" +
                 "\nType '4' to Order.\nType '5' to see all emails and passwords\n"
-                +"Type '6' to Navigate to Print Tables Menu\nType '7' to Quit.\n")
+                +"Type '6' to Navigate to Print Tables Menu\n"
+                +"Type '7' to see total price for an order\nType'8' to quit.")
             
             if user_input == '1':
                 customerSignUp(connection)
@@ -500,8 +610,12 @@ def main():
                         break
                     else:
                         print("Invalid Input.")
-                
+
             elif user_input == '7':
+                order_id = input("Enter order ID: ")
+                displayOrderTotal(connection, order_id)
+                viewOrderItems(connection, order_id)
+            elif user_input == '8':
                 connection.close()
                 break
 
