@@ -24,7 +24,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host='localhost',  # Address of the MySQL server, 'localhost' indicates it's on the local machine.
             user='root',  # Username to log in to MySQL, 'root' is the default admin user.
-            password='HiMyNameIsBob1))',  # Password for the MySQL user, should be kept secret and secure.
+            password='',  # Password for the MySQL user, should be kept secret and secure.
             database='db_project'  # Name of the database to which to connect.
         )
         # If the connection is successful, print a confirmation message.
