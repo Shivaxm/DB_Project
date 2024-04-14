@@ -301,4 +301,23 @@ CREATE INDEX idx_delivery_order_id ON Delivery(order_id);
 CREATE INDEX idx_delivery_driver_id ON Delivery(driver_id);
 CREATE INDEX idx_delivery_restaurant_id ON Delivery(restaurant_id);
 
+-- Change the delimiter to avoid confusion with semicolons inside the procedure
+DELIMITER $$
 
+-- Define the stored procedure
+CREATE PROCEDURE AddCustomer(
+    IN p_name VARCHAR(255),
+    IN p_email VARCHAR(255),
+    IN p_phone_number VARCHAR(20),
+    IN p_password VARCHAR(255),
+    IN p_birthday DATE,
+    IN p_address TEXT,
+    IN p_payment VARCHAR(255)
+)
+BEGIN
+    INSERT INTO Customer (name, email, phone_number, password, birthday, address, payment)
+    VALUES (p_name, p_email, p_phone_number, p_password, p_birthday, p_address, p_payment);
+END$$
+
+-- Reset the delimiter back to semicolon
+DELIMITER ;
