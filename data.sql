@@ -8,7 +8,15 @@ INSERT INTO Drivers (name, vehicle, rating, availability, phone_number) VALUES
 
 INSERT INTO Restaurants (name, address) VALUES
 ('Good Eats', '123 Food Lane'),
-('Tasty Treats', '456 Snack Blvd');
+('Tasty Treats', '456 Snack Blvd'),
+('Bob\'s Burgers', '459 Ocean Ave'),
+('Walt\'s Candy Shop', '308 Negra Arroyo Ln'),
+('Los Pollos Hermanos', '4590 Bell Ave'),
+('Shaq Shack', '1010 BBQ Chicken Rd'),
+('MacLaren\'s Pub', '103 Heart Ave'),
+('JJ\'s Diner', '6031 Libertarian Rd'),
+('Paunch Burger', '501 America Ave'),
+('Krusty Krab', '406 Bikini Bottom Rd');
 
 INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, total_price, status) VALUES
 (1, 1, 'ORDER001', '2023-04-01', 19.99, 'delivered'),
