@@ -38,8 +38,6 @@ CREATE TABLE Menu (
     FOREIGN KEY (restaurant_id) REFERENCES Restaurants(restaurant_id)
 );
 
-
-
 CREATE TABLE Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     restaurant_id INT NOT NULL,

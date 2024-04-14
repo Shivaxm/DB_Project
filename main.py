@@ -2,6 +2,8 @@ import mysql.connector
 from mysql.connector import Error
 
 #logged in customer information
+global customer_name, customer_email, customer_phone_number, customer_birthday, customer_address, customer_payment
+
 customer_name = ""
 customer_email = ""
 customer_phone_number = ""
@@ -22,7 +24,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host='localhost',  # Address of the MySQL server, 'localhost' indicates it's on the local machine.
             user='root',  # Username to log in to MySQL, 'root' is the default admin user.
-            password='(put ur password in here)',  # Password for the MySQL user, should be kept secret and secure.
+            password='C@bbiesToby1',  # Password for the MySQL user, should be kept secret and secure.
             database='db_project'  # Name of the database to which to connect.
         )
         # If the connection is successful, print a confirmation message.
@@ -123,7 +125,7 @@ def customerLogin(connection):
     customer_password = input("Enter your password: ")
 
     query = """
-    SELECT password FROM Customer WHERE email = %s;
+    SELECT password FROM customer WHERE email = %s;
     """
     cursor = connection.cursor()
     cursor.execute(query, (customer_email,))
@@ -146,7 +148,7 @@ def fetch_customer_information(connection, email, password):
         cursor = connection.cursor()
 
         query = """
-            SELECT id, name, email, phone_number, birthday, address, payment
+            SELECT id, name, email, password, phone_number, birthday, address, payment
             FROM Customer
             WHERE email = %s AND password = %s;
             """
@@ -156,12 +158,13 @@ def fetch_customer_information(connection, email, password):
 
         if result:
                 # Assigning fetched data to variables
-                customer_id, customer_name, customer_email, customer_phone_number, customer_birthday, customer_address, customer_payment = result
+                customer_id, customer_name, customer_email, customer_password, customer_phone_number, customer_birthday, customer_address, customer_payment = result
                 print("Customer Data Retrieved Successfully")
                 return {
                     "id": customer_id,
                     "name": customer_name,
                     "email": customer_email,
+                    "password" : customer_password,
                     "phone_number": customer_phone_number,
                     "birthday": customer_birthday,
                     "address": customer_address,
@@ -176,13 +179,14 @@ def fetch_customer_information(connection, email, password):
             cursor.close()
             
 def update_customer_information(customer_data):
-    global customer_id, customer_name, customer_email, customer_phone_number
+    global customer_id, customer_name, customer_email, customer_phone_number, customer_password
     global customer_birthday, customer_address, customer_payment
 
     if customer_data:
         customer_id = customer_data.get("id")
         customer_name = customer_data.get("name")
         customer_email = customer_data.get("email")
+        customer_password = customer_data.get("password")
         customer_phone_number = customer_data.get("phone_number")
         customer_birthday = customer_data.get("birthday")
         customer_address = customer_data.get("address")
@@ -200,7 +204,86 @@ def print_customer_details():
     else:
         print("Currently not logged in...")
 
+def get_customer_id(connection):
+    global customer_email, customer_password
+    
+    customer_query = """
+    SELECT id
+    FROM customer
+    WHERE email = %s AND password = %s;
+    """
+    cursor = connection.cursor()
+    cursor.execute(customer_query,(customer_email, customer_password))
+    result = cursor.fetchone()
+    cursor.close()
+    customer_id = result[0]
+    return customer_id
 
+def edit_customer_profile(connection):
+    global loggedIn
+    global customer_id, customer_name, customer_email, customer_phone_number
+    global customer_birthday, customer_address, customer_payment
+
+    if not loggedIn:
+        print("You are not signed in to your profile...")
+        return
+
+    customer_id = get_customer_id(connection)
+
+    print("Type '0' to Change Name:\nType '1' to Change email:"
+          +"\nType '2' to Change Phone Number:\nType '3' to Change Password:"
+          + "\nType '4' to Change Birthday\nType '5' to Change Address:\n"
+          + "Type '6' to change preferred payment type:")
+    choice = int(input("Enter your choice: "))
+
+    valid_attributes = ['name', 'email', 'phone_number', 'password', 'birthday', 'address', 'payment'] 
+    
+    if choice < 0 or choice >= len(valid_attributes): # check for valid number
+        print("Not a valid attribute. Returning to Main Menu...")
+        return
+
+    attribute_name = valid_attributes[choice]
+    new_value = input(f"Enter the new value for {attribute_name}: ")
+
+
+    update_query = f"UPDATE customer SET {attribute_name} = %s WHERE id = %s;"
+    try:
+        cursor = connection.cursor()
+        cursor.execute(update_query, (new_value, customer_id))    
+        connection.commit()
+        if cursor.rowcount > 0:
+            print(f"{attribute_name} updated successfully.")
+            edit_customer_globals(choice, new_value)
+        else:
+            print("No customer found with the specified ID, or no update needed.")
+    except Error as e:
+        print("Error occurred:", e)
+        connection.rollback()  # Rollback in case of any error
+    finally:
+        if cursor:
+            cursor.close()
+
+    
+def edit_customer_globals(choice, newInput):
+    global customer_id, customer_name, customer_email, customer_phone_number, customer_password
+    global customer_birthday, customer_address, customer_payment
+    
+    if choice == 0:
+        customer_name = newInput
+    elif choice == 1:
+        customer_email = newInput
+    elif choice == 2:
+        customer_phone_number = newInput
+    elif choice == 3:
+        customer_password = newInput
+    elif choice == 4:
+        customer_birthday = newInput
+    elif choice == 5:
+        customer_address = newInput
+    elif choice == 6:
+        customer_payment = newInput
+    else:
+        print("Not a valid response...")
 
 def customerSignUp(connection):
     global customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment
@@ -208,30 +291,29 @@ def customerSignUp(connection):
     # Gathering customer details
     customer_name = input("Enter your name: ")
     customer_email = input("Enter your email: ")
-    customer_phone_number = input("Enter your phone number: ")  # Changed to string input
+    customer_phone_number = input("Enter your phone number: ")  # Keep as string input
     customer_password = input("Create your password: ")
     customer_birthday = input("Enter your birthday (YYYY-MM-DD): ")
     customer_address = input("Enter your address: ")
     customer_payment = input("Enter your preferred payment type: ")
 
-    # SQL Query to insert the new customer
-    query = """
-    INSERT INTO Customer (name, email, phone_number, password, birthday, address, payment)
-    VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """
-    
+    # Preparing to call the stored procedure
     try:
-        # Prepare cursor and execute the insert statement
         cursor = connection.cursor()
-        cursor.execute(query, (customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment))
+        
+        # Call the stored procedure
+        cursor.callproc('AddCustomer', (customer_name, customer_email, customer_phone_number, customer_password, customer_birthday, customer_address, customer_payment))
         connection.commit()  # Ensure changes are committed to the database
         print("Customer added successfully!")
+        
     except Error as e:
         print("Error adding customer to database:", e)
-        connection.rollback()  # Roll back the transaction if error occurs
+        connection.rollback()  # Roll back the transaction if an error occurs
+    
     finally:
         if cursor:
             cursor.close()
+
 
 
 
@@ -422,6 +504,9 @@ def main():
             elif user_input == '7':
                 connection.close()
                 break
+
+            elif user_input == '8':
+                edit_customer_profile(connection)
 
             else: 
                 print("Invalid Input!")
