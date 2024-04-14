@@ -377,6 +377,40 @@ def list_available_drivers(connection):
     for driver in drivers:
         print(driver)
 
+def viewOrderItems(connection, order_id):
+    try:
+        # Prepare a cursor to execute the query
+        cursor = connection.cursor()
+
+        # SQL query to fetch order details
+        query = """
+        SELECT m.item_name, m.price, oi.quantity
+        FROM Order_Items oi
+        JOIN Menu m ON oi.menu_id = m.menu_id
+        WHERE oi.order_id = %s;
+        """
+
+        # Execute the query with the provided order_id
+        cursor.execute(query, (order_id,))
+        
+        # Fetch all the results
+        items = cursor.fetchall()
+
+        # Check if any items were found
+        if items:
+            print(f"Items for Order ID {order_id}:")
+            for item in items:
+                item_name, price, quantity = item
+                print(f"{quantity}x {item_name} at ${price} each")
+        else:
+            print(f"No items found for Order ID {order_id}.")
+
+    except Exception as e:
+        print(f"An error occurred while fetching order items: {e}")
+    
+    finally:
+        if cursor:
+            cursor.close()
 
 
 
@@ -466,6 +500,7 @@ def main():
             elif user_input == '7':
                 order_id = input("Enter order ID: ")
                 displayOrderTotal(connection, order_id)
+                viewOrderItems(connection, order_id)
             elif user_input == '8':
                 connection.close()
                 break
