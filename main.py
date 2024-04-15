@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
+from datetime import date
 
 #logged in customer information
 global customer_name, customer_email, customer_phone_number, customer_birthday, customer_address, customer_payment
@@ -24,7 +25,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host='localhost',  # Address of the MySQL server, 'localhost' indicates it's on the local machine.
             user='root',  # Username to log in to MySQL, 'root' is the default admin user.
-            password='HiMyNameIsBob1))',  # Password for the MySQL user, should be kept secret and secure.
+            password='(Enter you password here)',  # Password for the MySQL user, should be kept secret and secure.
             database='db_project'  # Name of the database to which to connect.
         )
         # If the connection is successful, print a confirmation message.
@@ -69,13 +70,12 @@ def customerOrder(connection):
     listAllRestaurants(connection)
 
     res_id = int(input("Enter Restaurant ID for the menu: "))
-    print("Select from the following Menu:")
-    menu_items = listMenuByRestaurantID(connection, res_id)
 
     try:
-        order_number = input("Enter order number (e.g., 'ORD001'): ")
-        order_date = input("Enter order date (YYYY-MM-DD): ")
+        order_number = input("Enter order number (e.g., 'ORDER001'): ")
+        order_date = date.today().strftime("%Y-%m-%d")
         status = input("Enter status (pending, confirmed, delivered, cancelled): ")
+        menu_items = listMenuByRestaurantID(connection, res_id)
 
         cursor = connection.cursor()
 
@@ -90,12 +90,18 @@ def customerOrder(connection):
         # Get and insert order items
         addItemsToOrder(connection, order_id, menu_items)
 
-        # Additional input for delivery details
-        handleDelivery(connection, order_id, res_id)
+        order_choice = input("Type '1' for Pickup: \nType '2' for Delivery:\n")
+        if order_choice == '1':
+            handlePickup(connection, order_id)
+            print("Order and pickup have been successfully recorded. This is your order id: " + str(order_id))
+        elif order_choice == '2':
+            # Additional input for delivery details
+            handleDelivery(connection, order_id, res_id)
+            connection.commit()
+            print("Order and delivery have been successfully recorded. This is your order id: " + str(order_id))
+        else:
+            print("Invalid Response")
 
-        connection.commit()
-        print("Order and delivery have been successfully recorded. This is your order id: " + str(order_id))
-    
     except Exception as e:
         print("An error occurred: ", e)
         connection.rollback()
@@ -106,7 +112,16 @@ def customerOrder(connection):
     
 
    
-
+def handlePickup(connection, order_id):
+    pickup_time = input("Enter Pickup Time (HH:MM:SS): ")
+    
+    pickup_query = """
+    INSERT INTO Pickup (order_id, pickup_time) VALUES (%s, %s)"""
+    cursor = connection.cursor()
+    cursor.execute(pickup_query, (order_id, pickup_time))
+    connection.commit()
+    cursor.close()
+    
 
 
 def listMenuByRestaurantID(connection, res_id):
@@ -142,7 +157,9 @@ def addItemsToOrder(connection, order_id, menu_items):
         more_items = more == 'yes'
 
 def handleDelivery(connection, order_id, restaurant_id):
-    driver_id = int(input("Enter Driver ID (enter 0 if no driver): "))
+    print("Here are the available drivers:")
+    list_available_drivers(connection)
+    driver_id = int(input("\nEnter Driver ID (enter 0 if no driver): "))
     if driver_id > 0:
         delivery_address = input("Enter Delivery Address: ")
         driver_tip = float(input("Enter Driver Tip: "))
@@ -418,16 +435,16 @@ def list_all_reviews(connection):
         print(review)
 
 def list_all_pickup(connection):
-    """List all customers in the database."""
-    query = "SELECT * FROM Customer;"
+    """List all pickup in the database."""
+    query = "SELECT * FROM pickup;"
 
     pickups = execute_read_query(connection, query)
     for pickup in pickups:
         print(pickup)
 
 def list_all_orders(connection):
-    """List all customers in the database."""
-    query = "SELECT * FROM Customer;"
+    """List all orders in the database."""
+    query = "SELECT * FROM orders;"
 
     orders = execute_read_query(connection, query)
     for order in orders:
@@ -482,7 +499,7 @@ def list_available_drivers(connection):
     """List all available drivers."""
     
     query = """
-    SELECT name, vehicle, rating, phone_number FROM Drivers
+    SELECT driver_id, name, vehicle, rating, phone_number FROM Drivers
     WHERE availability = TRUE;
     """
     
@@ -542,7 +559,7 @@ def main():
                 + "\nType '3' to see Account Details" +
                 "\nType '4' to Order.\nType '5' to see all emails and passwords\n"
                 +"Type '6' to Navigate to Print Tables Menu\n"
-                +"Type '7' to see total price for an order\nType'8' to quit.")
+                +"Type '7' to see total price for an order\nType '8' to edit profile.\nType '9' to quit\n")
             
             if user_input == '1':
                 customerSignUp(connection)
@@ -564,7 +581,7 @@ def main():
             elif user_input == '6':
                 
                 while True:
-                    table_input = input("\nPrint Tables Menu\n\nType '1' to print out the customer table"
+                    table_input = input("\nPrint Tables Menu\n\nType '1' for customer"
                                         + "\nType '2' for delivery"
                                         + "\nType '3' for drivers"
                                         + "\nType '4' for menu"
@@ -572,7 +589,7 @@ def main():
                                         + "\nType '6' for pickup"
                                         + "\nType '7' for restaurant"
                                         + "\nType '8' for reviews"
-                                        + "\nType '9' to return to Main Menu\n")
+                                        + "\nType '9' to return to main menu\n")
                     if table_input == '1':
                         print("\ncustomer Table List:")
                         list_all_customers(connection)
@@ -615,12 +632,13 @@ def main():
                 order_id = input("Enter order ID: ")
                 displayOrderTotal(connection, order_id)
                 viewOrderItems(connection, order_id)
-            elif user_input == '8':
-                connection.close()
-                break
 
             elif user_input == '8':
                 edit_customer_profile(connection)
+            elif user_input == '9':
+                print("Closing App...")
+                connection.close()
+                break
 
             else: 
                 print("Invalid Input!")
