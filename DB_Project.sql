@@ -44,7 +44,6 @@ CREATE TABLE Orders (
     customer_id INT NOT NULL,
     order_number VARCHAR(255) UNIQUE NOT NULL,
     order_date DATE NOT NULL,
-    total_price DECIMAL(10,2) NOT NULL,
     status ENUM('pending', 'confirmed', 'delivered', 'cancelled') NOT NULL,
     FOREIGN KEY (restaurant_id) REFERENCES Restaurants(restaurant_id),  -- Corrected reference
     FOREIGN KEY (customer_id) REFERENCES Customer(id)  -- Corrected table name and reference
@@ -81,6 +80,16 @@ CREATE TABLE Reviews (
     FOREIGN KEY (driver_id) REFERENCES Drivers(driver_id),
     FOREIGN KEY (customer_id) REFERENCES Customer(id)
 );
+
+CREATE TABLE Order_Items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    menu_id INT NOT NULL,
+    quantity INT DEFAULT 1,
+    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+    FOREIGN KEY (menu_id) REFERENCES Menu(menu_id)
+);
+
 
 INSERT INTO Customer (name, email, phone_number, password, birthday, address, payment) VALUES
 ('John Doe', 'johndoe@example.com', '123-456-7890', 'hashed_password', '1985-10-12', '1234 Elm St, Yourtown', 'Credit Card'),
@@ -160,29 +169,29 @@ INSERT INTO Restaurants (name, address) VALUES
 
 
 
-INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, total_price, status) VALUES
-(1, 1, 'ORDER001', '2023-04-01', 19.99, 'delivered'),
-(2, 2, 'ORDER002', '2023-04-02', 29.99, 'pending'),
-(3, 3, 'ORDER003', '2023-04-03', 34.99, 'delivered'),
-(5, 4, 'ORDER004', '2023-04-04', 15.99, 'confirmed'),
-(1, 5, 'ORDER005', '2023-04-05', 22.99, 'cancelled'),
-(2, 6, 'ORDER006', '2023-04-06', 28.99, 'pending'),
-(1, 7, 'ORDER007', '2023-04-07', 45.50, 'delivered'),
-(3, 8, 'ORDER008', '2023-04-08', 12.50, 'confirmed'),
-(1, 9, 'ORDER009', '2023-04-09', 23.75, 'delivered'),
-(2, 10, 'ORDER010', '2023-04-10', 19.20, 'pending'),
-(5, 11, 'ORDER011', '2023-04-11', 33.90, 'delivered'),
-(2, 12, 'ORDER012', '2023-04-12', 17.99, 'confirmed'),
-(3, 13, 'ORDER013', '2023-04-13', 36.89, 'cancelled'),
-(4, 14, 'ORDER014', '2023-04-14', 24.99, 'pending'),
-(1, 15, 'ORDER015', '2023-04-15', 21.99, 'delivered'),
-(4, 16, 'ORDER016', '2023-04-16', 25.49, 'confirmed'),
-(1, 17, 'ORDER017', '2023-04-17', 30.00, 'delivered'),
-(2, 18, 'ORDER018', '2023-04-18', 28.15, 'pending'),
-(5, 19, 'ORDER019', '2023-04-19', 15.75, 'delivered'),
-(2, 20, 'ORDER020', '2023-04-20', 18.45, 'confirmed'),
-(6, 21, 'ORDER021', '2023-04-21', 26.55, 'cancelled'),
-(2, 22, 'ORDER022', '2023-04-22', 22.35, 'pending');
+INSERT INTO Orders (restaurant_id, customer_id, order_number, order_date, status) VALUES
+(1, 1, 'ORDER001', '2023-04-01', 'delivered'),
+(2, 2, 'ORDER002', '2023-04-02', 'pending'),
+(3, 3, 'ORDER003', '2023-04-03', 'delivered'),
+(5, 4, 'ORDER004', '2023-04-04', 'confirmed'),
+(1, 5, 'ORDER005', '2023-04-05', 'cancelled'),
+(2, 6, 'ORDER006', '2023-04-06', 'pending'),
+(1, 7, 'ORDER007', '2023-04-07', 'delivered'),
+(3, 8, 'ORDER008', '2023-04-08', 'confirmed'),
+(1, 9, 'ORDER009', '2023-04-09', 'delivered'),
+(2, 10, 'ORDER010', '2023-04-10', 'pending'),
+(5, 11, 'ORDER011', '2023-04-11', 'delivered'),
+(2, 12, 'ORDER012', '2023-04-12',  'confirmed'),
+(3, 13, 'ORDER013', '2023-04-13', 'cancelled'),
+(4, 14, 'ORDER014', '2023-04-14',  'pending'),
+(1, 15, 'ORDER015', '2023-04-15', 'delivered'),
+(4, 16, 'ORDER016', '2023-04-16', 'confirmed'),
+(1, 17, 'ORDER017', '2023-04-17',  'delivered'),
+(2, 18, 'ORDER018', '2023-04-18',  'pending'),
+(5, 19, 'ORDER019', '2023-04-19',  'delivered'),
+(2, 20, 'ORDER020', '2023-04-20',  'confirmed'),
+(6, 21, 'ORDER021', '2023-04-21',  'cancelled'),
+(2, 22, 'ORDER022', '2023-04-22',  'pending');
 
 
 INSERT INTO Menu (restaurant_id, item_name, description, price) VALUES
@@ -285,6 +294,98 @@ INSERT INTO Reviews (driver_id, customer_id, rating, comments, review_date) VALU
 (5, 20, 4, 'Very courteous and on time.', '2023-04-20'),
 (1, 21, 5, 'Fantastic service, highly recommend.', '2023-04-21'),
 (2, 22, 3, 'Decent, but food was not hot.', '2023-04-22');
+
+-- Insert items for ORDER001 from Restaurant 1 (Burger, Pizza)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(1, 1, 2),  -- 2 Burgers
+(1, 2, 1);  -- 1 Pizza
+
+-- Insert items for ORDER002 from Restaurant 2 (Chicken Salad, Fish Tacos)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(2, 3, 1),  -- 1 Chicken Salad
+(2, 4, 2);  -- 2 Fish Tacos
+
+-- Insert items for ORDER003 from Restaurant 3 (Steak Sandwich, Veggie Wrap)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(3, 5, 1),  -- 1 Steak Sandwich
+(3, 6, 3);  -- 3 Veggie Wraps
+
+-- Insert items for ORDER004 from Restaurant 5 (Caesar Salad, BBQ Chicken Pizza)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(4, 9, 1),  -- 1 Caesar Salad
+(4, 10, 1);  -- 1 BBQ Chicken Pizza
+
+-- Continuing the pattern for a few more orders
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(5, 1, 1),  -- 1 Burger
+(5, 2, 1);  -- 1 Pizza
+
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(6, 3, 2),  -- 2 Chicken Salad
+(6, 4, 1);  -- 1 Fish Taco
+
+-- And so on for other orders, matching restaurant menus to orders
+-- Insert items for ORDER007, ORDER009, and ORDER015 from Restaurant 1 (Burger, Pizza)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(7, 1, 1),  -- 1 Burger
+(7, 2, 2),  -- 2 Pizzas
+(9, 1, 2),  -- 2 Burgers
+(9, 2, 1),  -- 1 Pizza
+(15, 1, 3),  -- 3 Burgers
+(15, 2, 1);  -- 1 Pizza
+
+-- Insert items for ORDER008 and ORDER018 from Restaurant 3 (Steak Sandwich, Veggie Wrap)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(8, 5, 1),  -- 1 Steak Sandwich
+(8, 6, 1),  -- 1 Veggie Wrap
+(18, 5, 2),  -- 2 Steak Sandwiches
+(18, 6, 2);  -- 2 Veggie Wraps
+
+-- Insert items for ORDER011 and ORDER019 from Restaurant 5 (Caesar Salad, BBQ Chicken Pizza)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(11, 9, 1),  -- 1 Caesar Salad
+(11, 10, 2),  -- 2 BBQ Chicken Pizzas
+(19, 9, 3),  -- 3 Caesar Salads
+(19, 10, 1);  -- 1 BBQ Chicken Pizza
+
+-- Insert items for ORDER016 from Restaurant 4 (Pasta Primavera, Calzone)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(16, 7, 1),  -- 1 Pasta Primavera
+(16, 8, 1);  -- 1 Calzone
+
+-- Insert items for ORDER020 from Restaurant 2 (Chicken Salad, Fish Tacos)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(20, 3, 1),  -- 1 Chicken Salad
+(20, 4, 1);  -- 1 Fish Taco
+
+-- Insert items for ORDER022 also from Restaurant 2 (more Chicken Salad, Fish Tacos)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(22, 3, 2),  -- 2 Chicken Salads
+(22, 4, 3);  -- 3 Fish Tacos
+-- Insert items for ORDER010 and ORDER014 from Restaurant 2 (Chicken Salad, Fish Tacos)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(10, 3, 2),  -- 2 Chicken Salads
+(10, 4, 3),  -- 3 Fish Tacos
+(14, 3, 1),  -- 1 Chicken Salad
+(14, 4, 1);  -- 1 Fish Taco
+
+-- Insert items for ORDER012 and ORDER021 from Restaurant 2 (also Chicken Salad, Fish Tacos)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(12, 3, 2),  -- 2 Chicken Salads
+(12, 4, 1),  -- 1 Fish Taco
+(21, 3, 1),  -- 1 Chicken Salad
+(21, 4, 2);  -- 2 Fish Tacos
+
+-- Insert items for ORDER013 from Restaurant 3 (Steak Sandwich, Veggie Wrap)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(13, 5, 1),  -- 1 Steak Sandwich
+(13, 6, 1);  -- 1 Veggie Wrap
+
+-- Insert items for ORDER017 from Restaurant 1 (Burger, Pizza)
+INSERT INTO Order_Items (order_id, menu_id, quantity) VALUES
+(17, 1, 1),  -- 1 Burger
+(17, 2, 2);  -- 2 Pizzas
+
 
 CREATE INDEX idx_customer_email ON Customer(email);
 
